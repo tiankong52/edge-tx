@@ -253,7 +253,6 @@ void audioInit() ;
 void audioEnd() ;
 void dacStart();
 void dacStop();
-void setSampleRate(uint32_t frequency);
 #define VOLUME_LEVEL_MAX  23
 #define VOLUME_LEVEL_DEF  12
 #if !defined(SOFTWARE_VOLUME)

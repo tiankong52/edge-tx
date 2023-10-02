@@ -21,12 +21,11 @@
 
 #include "opentx.h"
 
-#if !defined(SIMU)
 const AudioBuffer * nextBuffer = 0;
 
-void setSampleRate(uint32_t frequency)
+static void setSampleRate(uint32_t frequency)
 {
-  uint32_t timer = (PERI1_FREQUENCY * TIMER_MULT_APB1) / frequency - 1 ;         // MCK/8 and 100 000 Hz
+  uint32_t timer = (PERI1_FREQUENCY * TIMER_MULT_APB1) / frequency - 1; // MCK/8 and 100 000 Hz
 
   AUDIO_TIMER->CR1 &= ~TIM_CR1_CEN ;
   AUDIO_TIMER->CNT = 0 ;
@@ -35,10 +34,10 @@ void setSampleRate(uint32_t frequency)
 }
 
 // Start TIMER6 at 100000Hz, used for DAC trigger
-void dacTimerInit()
+static void dacTimerInit()
 {
-  AUDIO_TIMER->PSC = 0 ;                                                                                                 // Max speed
-  AUDIO_TIMER->ARR = (PERI1_FREQUENCY * TIMER_MULT_APB1) / 100000 - 1 ;        // 10 uS, 100 kHz
+  AUDIO_TIMER->PSC = 0 ; // Max speed
+  AUDIO_TIMER->ARR = (PERI1_FREQUENCY * TIMER_MULT_APB1) / 100000 - 1; // 10 uS, 100 kHz
   AUDIO_TIMER->CR2 = 0 ;
   AUDIO_TIMER->CR2 = 0x20 ;
   AUDIO_TIMER->CR1 = TIM_CR1_CEN ;
@@ -77,6 +76,7 @@ static inline bool getMutePin(void)
 // So maybe it is automatically done
 void dacInit()
 {
+  setSampleRate(AUDIO_SAMPLE_RATE);
   dacTimerInit();
 
   GPIO_InitTypeDef GPIO_InitStructure;
@@ -239,4 +239,3 @@ extern "C" void AUDIO_DMA_Stream_IRQHandler()
     DAC->SR = DAC_SR_DMAUDR1;                      // Write 1 to clear flag
   }
 }
-#endif  // #if !defined(SIMU)
