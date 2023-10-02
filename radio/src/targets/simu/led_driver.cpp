@@ -21,7 +21,6 @@
 
 #include <stdint.h>
 
-void usbChargerLed() {}
 void ledRed() {}
 void ledGreen() {}
 void ledBlue() {}
@@ -31,3 +30,4 @@ void fsLedOff(uint8_t) {}
 bool getFSLedState(uint8_t) { return false;}
 void rgbSetLedColor(unsigned char, unsigned char, unsigned char, unsigned char) {}
 void rgbLedColorApply() {}
+bool usbChargerLed() { return false; }
