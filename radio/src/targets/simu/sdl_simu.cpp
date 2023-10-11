@@ -24,7 +24,6 @@
 #include <imgui.h>
 #include <imgui_impl_sdl2.h>
 #include <imgui_impl_sdlrenderer2.h>
-#include "targets/simu/simpgmspace.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -50,8 +49,11 @@
 
 #include "simu.h"
 #include "widgets.h"
+#include "knobs.h"
 
 #include "simuaudio.h"
+#include "simpgmspace.h"
+
 #include "hal/key_driver.h"
 #include "switches.h"
 
@@ -364,15 +366,16 @@ static SDL_Texture* LoadTexture(SDL_Renderer* renderer, const unsigned char* pix
 
 static void draw_switches()
 {
-  const float spacing = 4;
-  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(spacing, spacing));
-  ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
-  ImGui::PushStyleVar(ImGuiStyleVar_GrabRounding, 4.0f);
   ImGui::PushID("switches");
   {
     static int switches[MAX_SWITCHES] = {0};
 
+    const float spacing = 4;
     ImGui::BeginGroup();
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(spacing, spacing));
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_GrabRounding, 4.0f);
+
     int sw_idx = 0;
     for (int i = 0; i < switchGetMaxSwitches(); i++) {
       if (!SWITCH_EXISTS(i)) {
@@ -397,10 +400,10 @@ static void draw_switches()
         simuSetSwitch(i, switches[i] == 0 ? -1 : 1);
       }
     }
+    ImGui::PopStyleVar(3);
     ImGui::EndGroup();
   }
   ImGui::PopID();
-  ImGui::PopStyleVar(3);
 }
 
 static void draw_gimbals()
@@ -409,6 +412,48 @@ static void draw_gimbals()
   stick_right.lock_y = (g_eeGeneral.stickMode == 0);
 
   GimbalPair("#gimbals", stick_left, stick_right);
+}
+
+static void draw_pots()
+{
+  const float spacing = 2;
+  ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(spacing, spacing));
+  ImGui::PushID("pots");
+  {
+    static int pots[MAX_POTS] = {0};
+    
+    ImGui::BeginGroup();
+    int pot_idx = 0;
+    for (int i = 0; i < adcGetMaxInputs(ADC_INPUT_POT); i++) {
+      if (!IS_POT_AVAILABLE(i)) {
+        pots[i] = 0;
+      } else {
+        if (pot_idx > 0) ImGui::SameLine();
+        ImGui::PushID(i);
+        auto flags = ImGuiKnobFlags_NoTitle | ImGuiKnobFlags_ValueTooltip |
+                     ImGuiKnobFlags_TitleTooltip;
+        auto label = adcGetInputLabel(ADC_INPUT_POT, i);
+        switch(POT_CONFIG(i)) {
+        case POT_WITH_DETENT:
+        case POT_WITHOUT_DETENT:
+        case POT_SLIDER_WITH_DETENT:
+          ImGuiKnobs::KnobInt(label, &pots[i], 0, 2048, 10, "%d",
+                              ImGuiKnobVariant_Tick, 0, flags);
+          break;
+
+        case POT_MULTIPOS_SWITCH:
+          ImGuiKnobs::KnobInt(label, &pots[i], 0, 5, 0.2f, "%d",
+                              ImGuiKnobVariant_Stepped, 0, flags, 6);
+          break;
+        }
+        ImGui::PopID();
+        if (++pot_idx >= 3) pot_idx = 0;
+      }
+    }
+    ImGui::EndGroup();
+  }
+  ImGui::PopID();
+  ImGui::PopStyleVar();
 }
 
 ImU32 get_bg_color()
@@ -479,11 +524,22 @@ static void redraw()
   bool show_win = true;
   if (ImGui::Begin("Main window", &show_win, flags)) {
 
+    auto flags = ImGuiTableFlags_SizingStretchProp;
+    ImGui::BeginTable("controls", 3, flags);
+
+    ImGui::TableNextColumn();
     draw_switches();
-    ImGui::SameLine();
-    draw_gimbals();
-    ImGui::SameLine();
     
+    ImGui::TableNextColumn();
+    draw_gimbals();
+
+    ImGui::TableNextColumn();
+    draw_pots();
+
+    ImGui::EndTable();
+
+    ImGui::Spacing();
+    ImGui::Spacing();
     draw_screen();
     // ImGui::Text("tmr10ms: %u", g_tmr10ms);
     // ImGui::Text("rtos time: %u", RTOS_GET_MS());

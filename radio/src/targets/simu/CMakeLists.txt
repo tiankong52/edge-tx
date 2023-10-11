@@ -189,6 +189,7 @@ add_executable(simu
   EXCLUDE_FROM_ALL
   ${SIMU_SRC}
   widgets.cpp
+  knobs.cpp
   sdl_simu.cpp
 )
 
