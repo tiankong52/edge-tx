@@ -21,9 +21,14 @@
 
 #include <SDL.h>
 
+#include <SDL_keycode.h>
 #include <imgui.h>
 #include <imgui_impl_sdl2.h>
 #include <imgui_impl_sdlrenderer2.h>
+#include "gui_common.h"
+#include "hal/adc_driver.h"
+#include "hal/rotary_encoder.h"
+#include "opentx_constants.h"
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -76,6 +81,10 @@ static GimbalState stick_right = {{0.5f, 0.5f}, false};
 static const unsigned char _icon_png[] = {
 #include "icon.lbm"
 };
+#endif
+
+#if defined(ROTARY_ENCODER_NAVIGATION)
+extern volatile rotenc_t rotencValue;
 #endif
 
 static void _set_pixel(uint8_t* pixel, const SDL_Color& color)
@@ -233,17 +242,27 @@ static bool handleKeyEvents(SDL_Event& event)
       break;
 
     case SDLK_UP:
+#if defined(ROTARY_ENCODER_NAVIGATION)
+      rotencValue -= ROTARY_ENCODER_GRANULARITY;
+      key_handled = true;
+#else
       if (keysGetSupported() & (1 << KEY_UP)) {
         key = KEY_UP;
         key_handled = true;
       }
+#endif
       break;
       
     case SDLK_DOWN:
+#if defined(ROTARY_ENCODER_NAVIGATION)
+      rotencValue += ROTARY_ENCODER_GRANULARITY;
+      key_handled = true;
+#else
       if (keysGetSupported() & (1 << KEY_DOWN)) {
         key = KEY_DOWN;
         key_handled = true;
       }
+#endif
       break;
 
     case SDLK_PLUS:
@@ -256,6 +275,20 @@ static bool handleKeyEvents(SDL_Event& event)
     case SDLK_MINUS:
       if (keysGetSupported() & (1 << KEY_MINUS)) {
         key = KEY_MINUS;
+        key_handled = true;
+      }
+      break;
+
+    case SDLK_PAGEUP:
+      if (keysGetSupported() & (1 << KEY_PAGEUP)) {
+        key = KEY_PAGEUP;
+        key_handled = true;
+      }
+      break;
+
+    case SDLK_PAGEDOWN:
+      if (keysGetSupported() & (1 << KEY_PAGEDN)) {
+        key = KEY_PAGEDN;
         key_handled = true;
       }
       break;
@@ -424,7 +457,7 @@ static void draw_pots()
     
     ImGui::BeginGroup();
     int pot_idx = 0;
-    for (int i = 0; i < adcGetMaxInputs(ADC_INPUT_POT); i++) {
+    for (int i = 0; i < adcGetMaxInputs(ADC_INPUT_FLEX); i++) {
       if (!IS_POT_AVAILABLE(i)) {
         pots[i] = 0;
       } else {
@@ -432,16 +465,16 @@ static void draw_pots()
         ImGui::PushID(i);
         auto flags = ImGuiKnobFlags_NoTitle | ImGuiKnobFlags_ValueTooltip |
                      ImGuiKnobFlags_TitleTooltip;
-        auto label = adcGetInputLabel(ADC_INPUT_POT, i);
-        switch(POT_CONFIG(i)) {
-        case POT_WITH_DETENT:
-        case POT_WITHOUT_DETENT:
-        case POT_SLIDER_WITH_DETENT:
+        auto label = adcGetInputLabel(ADC_INPUT_FLEX, i);
+        switch(getPotType(i)) {
+        case FLEX_POT:
+        case FLEX_POT_CENTER:
+        case FLEX_SLIDER:
           ImGuiKnobs::KnobInt(label, &pots[i], 0, 2048, 10, "%d",
                               ImGuiKnobVariant_Tick, 0, flags);
           break;
 
-        case POT_MULTIPOS_SWITCH:
+        case FLEX_MULTIPOS:
           ImGuiKnobs::KnobInt(label, &pots[i], 0, 5, 0.2f, "%d",
                               ImGuiKnobVariant_Stepped, 0, flags, 6);
           break;
@@ -711,7 +744,7 @@ uint16_t simu_get_analog(uint8_t idx)
 
   // idx -= max_sticks;
 
-  // auto max_pots = adcGetMaxInputs(ADC_INPUT_POT);
+  // auto max_pots = adcGetMaxInputs(ADC_INPUT_FLEX);
   // if (idx < max_pots)
   //   return opentxSim->knobs[idx]->getValue();
 

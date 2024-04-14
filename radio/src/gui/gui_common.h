@@ -281,7 +281,6 @@ inline bool MULTIMODULE_HAS_SUBTYPE(uint8_t moduleIdx)
   int proto = g_model.moduleData[moduleIdx].multi.rfProtocol;
 
   if (status.isValid()) {
-    TRACE("(%d) status.protocolSubNbr = %d", proto, status.protocolSubNbr);
     return status.protocolSubNbr > 0;
   }
   else

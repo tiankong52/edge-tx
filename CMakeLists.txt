@@ -126,10 +126,12 @@ if(EdgeTX_SUPERBUILD)
     DEPENDS native-configure
     )
 
-  add_custom_target(wasm-simu
-    COMMAND $(MAKE) -C wasm simu
-    DEPENDS wasm-configure
-    )
+  if(ENABLE_WASM)
+    add_custom_target(wasm-simu
+      COMMAND $(MAKE) -C wasm simu
+      DEPENDS wasm-configure
+      )
+  endif()
 
   add_custom_target(companion
     COMMAND $(MAKE) -C native companion
