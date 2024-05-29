@@ -72,8 +72,6 @@ void ChannelBar::checkEvents()
   if (value != newValue) {
     value = newValue;
 
-    lv_obj_enable_style_refresh(false);
-
     lv_label_set_text_fmt(valText, "%d%%", value);
 
     if (newValue < 0)
@@ -91,9 +89,6 @@ void ChannelBar::checkEvents()
 
     lv_obj_set_pos(bar, x, 0);
     lv_obj_set_size(bar, size, height());
-
-    lv_obj_enable_style_refresh(true);
-    lv_obj_refresh_style(lvobj, LV_PART_ANY, LV_STYLE_PROP_ANY);
   }
 }
 
