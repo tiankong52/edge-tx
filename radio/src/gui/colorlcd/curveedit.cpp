@@ -39,7 +39,7 @@ CurveDataEdit::CurveDataEdit(Window* parent, const rect_t& rect,
   etx_scrollbar(lvobj);
 }
 
-#if LCD_W > LCD_H
+#if !PORTRAIT_LCD
 #define NUM_BTN_WIDTH 44
 #else
 #define NUM_BTN_WIDTH 48
@@ -277,7 +277,7 @@ void CurveEditWindow::buildBody(Window* window)
   lv_obj_set_grid_align(line->getLvObj(), LV_GRID_ALIGN_SPACE_BETWEEN,
                         LV_GRID_ALIGN_SPACE_BETWEEN);
 
-#if LCD_H > LCD_W  // portrait
+#if PORTRAIT_LCD
   lv_obj_set_flex_flow(line->getLvObj(), LV_FLEX_FLOW_COLUMN);
   coord_t curveWidth = window->width() - 88;
   coord_t boxWidth = window->width();
@@ -310,7 +310,7 @@ void CurveEditWindow::buildBody(Window* window)
 
   // Name
   new StaticText(iLine, rect_t{}, STR_NAME);
-  new ModelTextEdit(iLine, rect_t{0, 0, 100, 0}, curve.name,
+  new ModelTextEdit(iLine, rect_t{}, curve.name,
                     sizeof(curve.name));
 
   // Smooth

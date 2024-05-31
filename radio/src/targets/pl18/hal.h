@@ -696,6 +696,9 @@
 #define MIXER_SCHEDULER_TIMER_IRQn           TIM8_BRK_TIM12_IRQn
 #define MIXER_SCHEDULER_TIMER_IRQHandler     TIM8_BRK_TIM12_IRQHandler
 
+#define PORTRAIT_LCD false
+#define LANDSCAPE_LCD true
+
 #define LCD_W                           480
 #define LCD_H                           320
 
